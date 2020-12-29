@@ -1,0 +1,1415 @@
+USE [QuanLyThuVien]
+GO
+/****** Object:  UserDefinedFunction [dbo].[DemSoCuonSachDangMuon]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function [dbo].[DemSoCuonSachDangMuon](@madocgia int)
+returns int
+as begin
+		declare @kq int
+		set @kq = (select count(*)
+					from MuonTra join ChiTiet_MuonTra
+					on MuonTra.MaMuonTra = ChiTiet_MuonTra.MaMuonTra
+					where MuonTra.MaDocGia = @madocgia and DaTra = 0)					
+		return(@kq)
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[DemSoSachTheoTheLoai]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function [dbo].[DemSoSachTheoTheLoai](@matheloai int)
+returns int
+as
+begin
+		declare @kq int
+		set @kq = (select count(*)
+					from Sach,DauSach,TheLoai_DauSach
+					where Sach.MaDauSach = DauSach.MaDauSach
+						and DauSach.MaDauSach = TheLoai_DauSach.MaDauSach
+						and TheLoai_DauSach.MaTheLoai = @matheloai)
+		return(@kq)
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[GomNgonNgu]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[GomNgonNgu](@madausach nchar(50))
+returns nvarchar(500)
+as 
+begin
+	declare Contro cursor for (select TenNgonNgu
+		from NgonNgu_DauSach join NgonNgu on NgonNgu_DauSach.MaNgonNgu = NgonNgu.MaNgonNgu
+		where MaDauSach = @madausach )
+	open Contro
+	declare @kq nvarchar(500)
+	set @kq = ''
+	declare @tenngonngu nvarchar(100)
+	fetch next from Contro into @tenngonngu
+	while @@FETCH_STATUS = 0
+	begin
+		set @kq = @kq + @tenngonngu + ', '
+		fetch next from Contro into @tenngonngu
+	end
+	close Contro
+	deallocate Contro
+	set @kq = stuff(@kq,len(@kq),1,'')
+	return @kq
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[GomNXB]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[GomNXB](@ma nchar(50))
+returns nvarchar(500)
+as 
+begin
+	declare Contro cursor for (select TenNXB
+	from NXB_DauSach join NhaXuatBan on NXB_DauSach.MaNXB = NhaXuatBan.MaNXB
+	where MaDauSach = @ma)
+	open Contro
+	declare @kq nvarchar(500)
+	set @kq = ''
+	declare @tenNXB nvarchar(100)
+	fetch next from Contro into @tenNXB
+	while @@FETCH_STATUS = 0
+	begin
+		set @kq = @kq + @tenNXB+', '
+		fetch next from Contro into @tenNXB
+	end
+	close Contro
+	deallocate Contro
+	set @kq = stuff(@kq,len(@kq),1,'')
+	return @kq
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[GomTacGia]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[GomTacGia](@madausach nchar(50))
+returns nvarchar(500)
+as 
+begin
+	declare Contro cursor for (select TenTacGia
+		from TacGia_DauSach join TacGia on TacGia_DauSach.MaTacGia = TacGia.MaTacGia
+		where MaDauSach = @madausach )
+	open Contro
+	declare @kq nvarchar(500)
+	set @kq = ''
+	declare @tentacgia nvarchar(100)
+	fetch next from Contro into @tentacgia
+	while @@FETCH_STATUS = 0
+	begin
+		set @kq = @kq + @tentacgia + ', '
+		fetch next from Contro into @tentacgia
+	end
+	close Contro
+	deallocate Contro
+	set @kq = stuff(@kq,len(@kq),1,'')
+	return @kq
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[GomTheLoai]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[GomTheLoai](@madausach nchar(50))
+returns nvarchar(500)
+as 
+begin
+	declare Contro cursor for (select TenTheLoai
+		from TheLoai_DauSach join TheLoai on TheLoai_DauSach.MaTheLoai = TheLoai.MaTheLoai
+		where MaDauSach = @madausach )
+	open Contro
+	declare @kq nvarchar(500)
+	set @kq = ''
+	declare @tenTheLoai nvarchar(100)
+	fetch next from Contro into @tenTheLoai
+	while @@FETCH_STATUS = 0
+	begin
+		set @kq = @kq + @tenTheLoai + ', '
+		fetch next from Contro into @tenTheLoai
+	end
+	close Contro
+	deallocate Contro
+	set @kq = stuff(@kq,len(@kq),1,'')
+	return @kq
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[HienThi]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function [dbo].[HienThi]()
+returns @BangThongTin table(
+MaNhanVien int,
+MaDocGia int,
+TenDocGia nvarchar(200),
+NgayMuon datetime,
+NgayTra datetime)
+as
+begin
+    insert into @BangThongTin
+    select 
+	nv.MaNhanVien, dg.MaDocGia, dg.TenDocGia, ct.NgayMuon, ct.NgayTra 
+    from DocGia dg, NhanVien nv, MuonTra mt, ChiTiet_MuonTra ct 
+    where 
+	      nv.MaNhanVien = mt.MaNhanVien and
+          mt.MaDocGia = dg.MaDocGia and
+	      ct.MaMuonTra = mt.MaMuonTra	  
+    return;
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[hienthisachdangmuon]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[hienthisachdangmuon] (@madocgia int)
+RETURNS @bangsachdangmuontheodocgia 
+		TABLE (MaMuonTra nvarchar(50),MaSach nvarchar(50), TenDauSach nvarchar(200), TenTacGia nvarchar(200),
+	NgayMuon DateTime, HoTen nvarchar(200))
+BEGIN
+	insert into @bangsachdangmuontheodocgia
+	SELECT 
+	DISTINCT  mt.MaMuonTra, s.MaSach AS [Mã sách], ds.TenDauSach AS [Tên sách],dbo.GomTacGia(ds.MaDauSach),
+	ctmt.NgayMuon AS [Ngày mu?n], nv.HoTen AS [Mu?n c?a nhân viên]
+	from 
+	dbo.DocGia dg,dbo.NhanVien nv, dbo.MuonTra mt, dbo.ChiTiet_MuonTra ctmt, dbo.Sach s, dbo.TacGia tg, dbo.DauSach ds, 
+	dbo.TacGia_DauSach tgds
+	WHERE dg.MaDocGia = @madocgia AND mt.MaDocGia = dg.MaDocGia AND mt.MaMuonTra = ctmt.MaMuonTra 
+	AND ctmt.MaSach = s.MaSach AND mt.MaNhanVien = nv.MaNhanVien AND s.MaDauSach = ds.MaDauSach AND ds.MaDauSach = tgds.MaDauSach
+	AND tgds.MaTacGia = tg.MaTacGia AND ctmt.DaTra = 0
+	return
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[NguoiMuonSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function [dbo].[NguoiMuonSach] (@masach nchar(50))
+returns nvarchar(50)
+as begin
+	declare @kq nvarchar(200)
+	if exists (select * from ChiTiet_MuonTra where MaSach = @masach)
+	begin
+		set @kq = (select TenDocGia 
+					from (DocGia join MuonTra on DocGia.MaDocGia = MuonTra.MaDocGia) 
+						join ChiTiet_MuonTra on MuonTra.MaMuonTra = ChiTiet_MuonTra.MaMuonTra
+					where MaSach = @masach)
+	end
+	else
+		set @kq = N'Chưa ai mượn'
+	return @kq
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[ThongTinChiTietCuonSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[ThongTinChiTietCuonSach] (@masach nchar(50))
+returns @bangchitiet table (
+		MaDauSach nchar(50),TenDauSach nvarchar(500),TacGia nvarchar(500),TheLoai nvarchar(500),
+		NgonNgu nvarchar(500),NXB nvarchar(500),
+		MaSach nchar(50),Tap int,LanTaiBan int,SoTrang int,NamXuatBan datetime,
+		NgayThem datetime,TinhTrang nvarchar(200),Gia int,TenGia nvarchar(500),Tang int,Ngan int,HinhAnh nvarchar(max)
+)as begin	
+		insert into @bangchitiet 
+			select DauSach.MaDauSach,TenDauSach,dbo.GomTacGia(DauSach.MaDauSach),
+			dbo.GomTheLoai(DauSach.MaDauSach),dbo.GomNgonNgu(DauSach.MaDauSach),
+			dbo.GomNXB(DauSach.MaDauSach),
+
+			MaSach,Tap,LanTaiBan,SoTrang,NgayNhap,NamXuatBan,TinhTrang,v.MaGiaSach,TenGiaSach,
+			Tang,Ngan,HinhAnh								 		    
+	
+			from (Sach join DauSach on Sach.MaDauSach = DauSach.MaDauSach)
+			join (ViTriCuThe as v join GiaSach on v.MaGiaSach = GiaSach.MaGiaSach)
+			on Sach.MaViTri = v.MaViTri				
+			where MaSach =@masach
+	return
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[ThongTinChiTietDauSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[ThongTinChiTietDauSach] (@madausach nchar(50))
+returns @bangchitiet table (
+		MaDauSach nchar(50),TenDauSach nvarchar(500),TacGia nvarchar(500),TheLoai nvarchar(500),
+		NgonNgu nvarchar(500),NXB nvarchar(500)
+)as begin
+	insert into @bangchitiet 
+				select MaDauSach,TenDauSach,dbo.GomTacGia(MaDauSach),
+				dbo.GomTheLoai(MaDauSach),dbo.GomNgonNgu(MaDauSach),
+				dbo.GomNXB(MaDauSach)				
+				from DauSach							
+				where MaDauSach = @madausach
+	return
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[ThongTinChiTietMuonTra]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[ThongTinChiTietMuonTra](@mamuontra int)
+returns @bangthongtin table(
+	MaMuonTra int, MaSach nchar(50),TenSach nvarchar(500), Tap int,LanTB int, NgayMuon datetime, 
+	HanMuon datetime,TinhTrang int ,MaNhanVien int,NgayQuaHan int,
+	MaDocGia int, TenDocGia nvarchar(200), DonVi nvarchar(200),SoCuonDangMuon int
+)as begin
+	insert into @bangthongtin 
+		select MuonTra.MaMuonTra,ChiTiet_MuonTra.MaSach,DauSach.TenDauSach,Sach.Tap,Sach.LanTaiBan,
+		NgayMuon,NgayTra,DaTra,MaNhanVien,DATEDIFF(day,NgayTra,GETDATE()),
+		MuonTra.MaDocGia,TenDocGia,DonVi,dbo.DemSoCuonSachDangMuon(MuonTra.MaDocGia)		
+		from (((MuonTra join ChiTiet_MuonTra on MuonTra.MaMuonTra = ChiTiet_MuonTra.MaMuonTra)
+			join DocGia on MuonTra.MaDocGia = DocGia.MaDocGia) 
+			join Sach on ChiTiet_MuonTra.MaSach = Sach.MaSach)
+			join DauSach on Sach.MaDauSach =DauSach.MaDauSach
+		where MuonTra.MaMuonTra = @mamuontra
+	return
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[timKiemDocGia]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[timKiemDocGia] ( @noidungtimkiem nvarchar(max))
+RETURNs @bangketqua table 
+(MaDocGia int, TenDocGia nvarchar(200), DonVi nvarchar(200), NgaySinh DateTime, SDT int, QueQuan nvarchar(100))
+AS
+BEGIN
+
+	declare @checkInt int
+	-- do ma doc gia la kieu int nen can check 
+	set @checkInt = TRY_CAST(@noidungtimkiem AS int)
+	IF (@checkInt IS NOT NULL ) 
+
+		BEGIN
+			insert into @bangketqua
+			select * FROM DocGia
+			where dbo.DocGia.MaDocGia = @checkInt
+		END
+		
+	 else 
+	 BEGIN
+			insert into @bangketqua
+			select * FROM DocGia
+			where dbo.DocGia.MaDocGia = TRY_CAST(@noidungtimkiem AS int)
+					or dbo.DocGia.TenDocGia like N'%'+@noidungtimkiem+'%'
+					or dbo.DocGia.DonVi like N'%'+@noidungtimkiem+'%'
+					or dbo.DocGia.NgaySinh like N'%'+@noidungtimkiem+'%'
+					or dbo.DocGia.SDT like N'%'+@noidungtimkiem+'%'
+					or dbo.DocGia.QueQuan like N'%'+@noidungtimkiem+'%'
+	 END
+		
+
+	return
+END
+GO
+/****** Object:  UserDefinedFunction [dbo].[TimKiemMuonTra]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[TimKiemMuonTra](@strthongtin nvarchar(max))
+returns @bangketqua table(
+		MaMuonTra int,MaSach nchar(50),MaDocGia int,TenDocGia nchar(200),TinhTrang int		
+)as begin
+	set @strthongtin = @strthongtin + ','
+	while (CHARINDEX(',',@strthongtin) > 0)
+	-- tìm kiếm nhiều thông tin,cắt từng thông tin theo dấu ','
+	begin
+		declare @thongtin nvarchar(500)
+		set @thongtin = LEFT(@strthongtin,CHARINDEX(',',@strthongtin)-1)
+		set @thongtin = Rtrim(Ltrim(@thongtin))
+		insert into @bangketqua
+			SELECT MuonTra.MaMuonTra,MaSach,DocGia.MaDocGia,TenDocGia,DaTra
+			FROM (MuonTra join ChiTiet_MuonTra on MuonTra.MaMuonTra = ChiTiet_MuonTra.MaMuonTra)
+					join DocGia on MuonTra.MaDocGia = DocGia.MaDocGia
+			where	MuonTra.MaMuonTra = TRY_CONVERT(int,@thongtin) or
+					LOWER(MaSach) like N'%'+LOWER(@thongtin)+'%' or
+					MuonTra.MaDocGia = TRY_CONVERT(int,@thongtin) or
+					LOWER(TenDocGia) like N'%'+LOWER(@thongtin)+'%' 					
+		set @strthongtin = stuff(@strthongtin,1,CHARINDEX(',',@strthongtin)+1,'')
+	end	
+	return
+end	
+GO
+/****** Object:  UserDefinedFunction [dbo].[TimKiemNangCao]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[TimKiemNangCao](
+	@tendausach nvarchar(500),@tacgia nvarchar(500),
+	@theloai nvarchar(500),@ngonngu nvarchar(500),@nxb nvarchar(500)
+)
+returns @bangketqua table(
+	MaSach nchar(50), TenDauSach nvarchar(500),Tap int,LanTaiBan int,ViTri nchar(10),NguoiMuon nvarchar(200),
+	TacGia nvarchar(500),TheLoai nvarchar(500),NgonNgu nvarchar(500),NXB nvarchar(500)	
+)as begin
+	insert into @bangketqua
+			SELECT MaSach, TenDauSach, Tap, LanTaiBan, dbo.ViTri(MaViTri),dbo.NguoiMuonSach(MaSach),
+			dbo.GomTacGia(DauSach.MaDauSach), dbo.GomTheLoai(DauSach.MaDauSach),			
+            dbo.GomNgonNgu(DauSach.MaDauSach), dbo.GomNXB(DauSach.MaDauSach)
+			FROM Sach INNER JOIN DauSach  ON  Sach.MaDauSach = DauSach.MaDauSach	
+			where  LOWER(TenDauSach) like N'%'+LOWER(@tendausach)+'%' 
+				 and LOWER(dbo.GomTacGia(DauSach.MaDauSach)) like N'%'+LOWER(@tacgia)+'%'
+				 and LOWER(dbo.GomNXB(DauSach.MaDauSach)) like N'%'+LOWER(@nxb)+'%'
+				 and LOWER(dbo.GomTheLoai(DauSach.MaDauSach)) like N'%'+LOWER(@theloai)+'%'
+				 and LOWER(dbo.GomNgonNgu(DauSach.MaDauSach)) like N'%'+LOWER(@ngonngu)+'%'
+	return
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[TimKiemSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE function [dbo].[TimKiemSach](@strthongtin nvarchar(max))
+returns @bangketqua table(
+		MaSach nchar(50),TenDauSach nvarchar(500),Tap int,LanTaiBan int,ViTri nvarchar(10),
+		NguoiMuon nvarchar(200),
+		TacGia nvarchar(500),TheLoai nvarchar(500),NgonNgu nvarchar(500),NXB nvarchar(500)		
+)as begin
+	set @strthongtin = @strthongtin + ','
+	while (CHARINDEX(',',@strthongtin) > 0)
+	-- tìm kiếm nhiều thông tin,cắt từng thông tin theo dấu ','
+	begin
+		declare @thongtin nvarchar(500)
+		set @thongtin = LEFT(@strthongtin,CHARINDEX(',',@strthongtin)-1)
+		set @thongtin = Rtrim(Ltrim(@thongtin))
+		insert into @bangketqua
+			SELECT MaSach, TenDauSach, Tap, LanTaiBan, dbo.ViTri(MaViTri),dbo.NguoiMuonSach(MaSach),
+			dbo.GomTacGia(DauSach.MaDauSach), dbo.GomTheLoai(DauSach.MaDauSach),			
+            dbo.GomNgonNgu(DauSach.MaDauSach), dbo.GomNXB(DauSach.MaDauSach)
+			FROM Sach INNER JOIN DauSach  ON  Sach.MaDauSach = DauSach.MaDauSach				
+			where	LOWER(MaSach) like N'%'+LOWER(@thongtin)+'%'
+					or LOWER(TenDauSach) like N'%'+@thongtin+'%'
+					or LOWER(dbo.NguoiMuonSach(MaSach)) like N'%'+@thongtin+'%'
+					or LOWER(dbo.GomTacGia(DauSach.MaDauSach)) like N'%'+LOWER(@thongtin)+'%'
+					or LOWER(dbo.GomTheLoai(DauSach.MaDauSach)) like N'%'+LOWER(@thongtin)+'%'
+					or LOWER(dbo.GomNXB(DauSach.MaDauSach)) like N'%'+LOWER(@thongtin)+'%'					
+					or LOWER(dbo.GomNgonNgu(DauSach.MaDauSach)) like N'%'+LOWER(@thongtin)+'%'
+		set @strthongtin = stuff(@strthongtin,1,CHARINDEX(',',@strthongtin)+1,'')
+	end	
+	return
+end
+GO
+/****** Object:  UserDefinedFunction [dbo].[ViTri]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function [dbo].[ViTri](@mavitri int)
+returns nvarchar(7)
+as
+begin
+	declare Contro cursor for (select MaGiaSach,Tang,Ngan from ViTriCuThe where MaViTri = @mavitri)
+	open Contro
+	declare @kq nvarchar(7)
+	declare @Gia int,@Tang int,@Ngan int
+	fetch next from Contro into @Gia,@Tang,@Ngan
+	set @kq = 'G'+CAST(@Gia as nchar(1))+'T'+CAST(@Tang as nchar(1))+'N'+CAST(@Ngan as nchar(1))
+	close Contro
+	deallocate Contro
+	return @kq
+end
+GO
+/****** Object:  Table [dbo].[ChiTiet_MuonTra]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ChiTiet_MuonTra](
+	[MaMuonTra] [int] IDENTITY(1,1) NOT NULL,
+	[MaSach] [nchar](50) NULL,
+	[NgayMuon] [datetime] NULL,
+	[DaTra] [int] NULL,
+	[NgayTra] [datetime] NULL,
+ CONSTRAINT [PK_ChiTiet_MuonTra] PRIMARY KEY CLUSTERED 
+(
+	[MaMuonTra] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[DauSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[DauSach](
+	[MaDauSach] [nchar](50) NOT NULL,
+	[TenDauSach] [nvarchar](200) NULL,
+ CONSTRAINT [PK_DauSach] PRIMARY KEY CLUSTERED 
+(
+	[MaDauSach] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Sach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Sach](
+	[MaSach] [nchar](50) NOT NULL,
+	[MaDauSach] [nchar](50) NULL,
+	[Tap] [int] NULL,
+	[LanTaiBan] [int] NULL,
+	[TinhTrang] [nvarchar](100) NULL,
+	[SoTrang] [int] NULL,
+	[NgayNhap] [datetime] NULL,
+	[NamXuatBan] [datetime] NULL,
+	[MaViTri] [int] NULL,
+	[HinhAnh] [nvarchar](max) NULL,
+	[SoLuong] [int] NULL,
+ CONSTRAINT [PK_Sach] PRIMARY KEY CLUSTERED 
+(
+	[MaSach] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[TheLoai]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[TheLoai](
+	[MaTheLoai] [int] IDENTITY(1,1) NOT NULL,
+	[TenTheLoai] [nvarchar](200) NULL,
+ CONSTRAINT [PK_TheLoai] PRIMARY KEY CLUSTERED 
+(
+	[MaTheLoai] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[TheLoai_DauSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[TheLoai_DauSach](
+	[MaDauSach] [nchar](50) NULL,
+	[MaTheLoai] [int] NULL
+) ON [PRIMARY]
+GO
+/****** Object:  UserDefinedFunction [dbo].[F_PhanNhomTheLoai]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[F_PhanNhomTheLoai]()
+RETURNS TABLE
+AS RETURN
+	(select ds.TenDauSach, tl.TenTheLoai
+	from (select a.MaDauSach, a.MaTheLoai
+			from (select TheLoai.MaTheLoai ,count(TenDauSach) as soSach,DauSach.MaDauSach 
+					from TheLoai,TheLoai_DauSach,DauSach
+					where TheLoai.MaTheLoai=TheLoai_DauSach.MaTheLoai 
+						and DauSach.MaDauSach=TheLoai_DauSach.MaDauSach 
+					group by TheLoai.MaTheLoai,DauSach.MaDauSach) as a,
+				Sach,
+				ChiTiet_MuonTra
+			where Sach.MaDauSach=a.MaDauSach 
+				and ChiTiet_MuonTra.MaSach=Sach.MaSach
+			group by a.MaTheLoai ,a.MaDauSach) as b,
+		DauSach ds,
+		TheLoai tl
+	where b.MaDauSach=ds.MaDauSach 
+		and b.MaTheLoai=tl.MaTheLoai)
+GO
+/****** Object:  UserDefinedFunction [dbo].[F_SachDuocMuonNhieu]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[F_SachDuocMuonNhieu]()
+RETURNS TABLE 
+AS RETURN
+	(SELECT TenDauSach , COUNT(Sach.MaSach) as SoLuotMuon
+	FROM Sach,ChiTiet_MuonTra,DauSach
+	WHERE DauSach.MaDauSach=Sach.MaDauSach and ChiTiet_MuonTra.MaSach=Sach.MaSach
+	GROUP BY TenDauSach)
+GO
+/****** Object:  UserDefinedFunction [dbo].[F_SoLuongSachConLai]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[F_SoLuongSachConLai]()
+RETURNS TABLE
+AS RETURN
+	(SELECT ds.TenDauSach, COUNT(*) as "Số lượng"
+	FROM Sach s, DauSach ds, ChiTiet_MuonTra mt
+	WHERE s.MaDauSach=ds.MaDauSach
+	and s.MaSach=mt.MaSach
+	and ((mt.DaTra=1) or (mt.NgayMuon=null))
+	GROUP BY ds.TenDauSach)
+GO
+/****** Object:  View [dbo].[HienThiGiaoDienDauSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+	create view [dbo].[HienThiGiaoDienDauSach] 
+	as
+		select MaDauSach,TenDauSach,
+				dbo.GomTacGia(MaDauSach) as [Tác giả],
+				dbo.GomTheLoai(MaDauSach)as [Thể loại],
+				dbo.GomNgonNgu(MaDauSach)as [Ngôn ngữ],
+				dbo.GomNXB(MaDauSach)as [NXB]
+		from DauSach
+GO
+/****** Object:  Table [dbo].[DocGia]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[DocGia](
+	[MaDocGia] [int] NOT NULL,
+	[TenDocGia] [nvarchar](200) NULL,
+	[DonVi] [nvarchar](200) NULL,
+	[NgaySinh] [datetime] NULL,
+	[SDT] [int] NULL,
+	[QueQuan] [nvarchar](100) NULL,
+ CONSTRAINT [PK_DocGia] PRIMARY KEY CLUSTERED 
+(
+	[MaDocGia] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[MuonTra]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[MuonTra](
+	[MaDocGia] [int] NULL,
+	[MaNhanVien] [int] NULL,
+	[MaMuonTra] [int] NOT NULL
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[HienThiGiaoDienMuonTra]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE view [dbo].[HienThiGiaoDienMuonTra]
+as
+	select MuonTra.MaMuonTra,MaSach,MuonTra.MaDocGia,TenDocGia,DaTra
+	from (MuonTra join ChiTiet_MuonTra on MuonTra.MaMuonTra = ChiTiet_MuonTra.MaMuonTra)
+			join DocGia on MuonTra.MaDocGia = DocGia.MaDocGia
+GO
+/****** Object:  View [dbo].[HienThiGiaoDienSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create view [dbo].[HienThiGiaoDienSach]
+as
+SELECT MaSach,TenDauSach,Tap,LanTaiBan, dbo.ViTri(MaViTri) AS [Vị trí], 
+			dbo.NguoiMuonSach(MaSach) as [Người mượn],
+			dbo.GomTacGia(DauSach.MaDauSach) AS [Tác giả],
+			dbo.GomTheLoai(DauSach.MaDauSach) AS [Thể loại], 
+            dbo.GomNgonNgu(DauSach.MaDauSach) AS [Ngôn ngữ],
+			dbo.GomNXB(DauSach.MaDauSach) AS NXB
+FROM Sach INNER JOIN DauSach ON Sach.MaDauSach =DauSach.MaDauSach
+GO
+/****** Object:  View [dbo].[hienthitoanbodocgia]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[hienthitoanbodocgia]
+AS SELECT * FROM dbo.DocGia dg
+GO
+/****** Object:  Table [dbo].[ChucVu]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ChucVu](
+	[MaChucVu] [int] NOT NULL,
+	[TenChucVu] [nvarchar](200) NULL,
+ CONSTRAINT [PK_ChucVu] PRIMARY KEY CLUSTERED 
+(
+	[MaChucVu] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[NhanVien]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[NhanVien](
+	[MaNhanVien] [int] IDENTITY(1,1) NOT NULL,
+	[HoTen] [nvarchar](200) NULL,
+	[NgaySinh] [datetime] NULL,
+	[SDT] [int] NULL,
+	[Email] [nchar](200) NULL,
+	[MaChucVu] [int] NULL,
+ CONSTRAINT [PK_NhanVien] PRIMARY KEY CLUSTERED 
+(
+	[MaNhanVien] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[SoLuongNV_CV]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create view [dbo].[SoLuongNV_CV]
+ as
+ select cv.TenChucVu, count(nv.MaNhanVien) as SoLuong
+ from NhanVien nv, ChucVu cv
+ where cv.MaChucVu = nv.MaChucVu
+ group by cv.MaChucVu, TenChucVu
+GO
+/****** Object:  View [dbo].[ThongKeCuonSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create view [dbo].[ThongKeCuonSach]
+as
+select TenDauSach,Tap,LanTaiBan,SoTrang,	
+	COUNT(*) as [Số cuốn]
+from DauSach left join Sach on DauSach.MaDauSach = Sach.MaDauSach
+group by TenDauSach,Tap,LanTaiBan,SoTrang
+GO
+/****** Object:  View [dbo].[ThongKeDauSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create view [dbo].[ThongKeDauSach]
+as
+	SELECT  DauSach.MaDauSach,TenDauSach, dbo.GomTacGia(DauSach.MaDauSach) AS [Tác giả],
+			dbo.GomNgonNgu(DauSach.MaDauSach) AS [Ngôn Ngữ],
+			dbo.GomTheLoai(DauSach.MaDauSach) AS [Thể Loại], 
+            dbo.GomNXB(DauSach.MaDauSach) AS NXB, COUNT(*) AS [Số cuốn sách]
+	FROM    DauSach LEFT JOIN Sach ON DauSach.MaDauSach = Sach.MaDauSach                       
+	GROUP BY DauSach.MaDauSach, DauSach.TenDauSach
+GO
+/****** Object:  View [dbo].[ThongKeHoatDongNhanVien]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create view [dbo].[ThongKeHoatDongNhanVien]
+as
+select NhanVien.MaNhanVien,HoTen,count(*) as [Số cuốn]
+from NhanVien left join MuonTra on NhanVien.MaNhanVien = MuonTra.MaNhanvien
+group by NhanVien.MaNhanVien,HoTen
+GO
+/****** Object:  Table [dbo].[TacGia]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[TacGia](
+	[MaTacGia] [int] IDENTITY(1,1) NOT NULL,
+	[TenTacGia] [nvarchar](200) NULL,
+	[NgaySinh] [datetime] NULL,
+ CONSTRAINT [PK_TacGia] PRIMARY KEY CLUSTERED 
+(
+	[MaTacGia] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[TacGia_DauSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[TacGia_DauSach](
+	[MaDauSach] [nchar](50) NULL,
+	[MaTacGia] [int] NULL
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[ThongKeTacGia]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create view [dbo].[ThongKeTacGia]
+as
+select TenTacGia,NgaySinh,Count(*) as [Số cuốn sách]
+from TacGia,TacGia_DauSach,DauSach,Sach
+where TacGia.MaTacGia = TacGia_DauSach.MaTacGia
+	and TacGia_DauSach.MaDauSach = DauSach.MaDauSach
+	and DauSach.MaDauSach = Sach.MaDauSach
+group by TenTacGia,NgaySinh
+GO
+/****** Object:  View [dbo].[ThongKeTheLoai]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create view [dbo].[ThongKeTheLoai]
+as
+select TenTheLoai,count(*) as [Số đầu sách],
+	dbo.DemSoSachTheoTheLoai(TheLoai.MaTheLoai) as [Số cuốn sách]
+from TheLoai left join TheLoai_DauSach
+on TheLoai.MaTheLoai = TheLoai_DauSach.MaTheLoai
+group by TheLoai.MaTheLoai,TenTheLoai
+GO
+/****** Object:  View [dbo].[ThongTin_CT]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create view [dbo].[ThongTin_CT]
+as
+select nv.MaNhanVien, dg.MaDocGia, dg.TenDocGia, ct.NgayMuon, ct.NgayTra 
+from DocGia dg, NhanVien nv, MuonTra mt, ChiTiet_MuonTra ct
+where nv.MaNhanVien = mt.MaNhanVien and
+      mt.MaDocGia = dg.MaDocGia and
+	  ct.MaMuonTra = mt.MaMuonTra and
+	  nv.MaNhanVien = 1
+GO
+/****** Object:  Table [dbo].[GiaSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[GiaSach](
+	[MaGiaSach] [int] NOT NULL,
+	[TenGiaSach] [nvarchar](500) NULL,
+ CONSTRAINT [PK_GiaSach] PRIMARY KEY CLUSTERED 
+(
+	[MaGiaSach] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[NgonNgu]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[NgonNgu](
+	[MaNgonNgu] [int] IDENTITY(1,1) NOT NULL,
+	[TenNgonNgu] [nvarchar](200) NULL,
+ CONSTRAINT [PK_NgonNgu] PRIMARY KEY CLUSTERED 
+(
+	[MaNgonNgu] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[NgonNgu_DauSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[NgonNgu_DauSach](
+	[MaDauSach] [nchar](50) NULL,
+	[MaNgonNgu] [int] NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[NhaXuatBan]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[NhaXuatBan](
+	[MaNXB] [int] IDENTITY(1,1) NOT NULL,
+	[TenNXB] [nvarchar](200) NULL,
+	[DiaChi] [nvarchar](200) NULL,
+	[SDT] [int] NULL,
+	[Email] [nvarchar](200) NULL,
+ CONSTRAINT [PK_NhaXuatBan] PRIMARY KEY CLUSTERED 
+(
+	[MaNXB] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[NXB_DauSach]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[NXB_DauSach](
+	[MaDauSach] [nchar](50) NULL,
+	[MaNXB] [int] NULL
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[TaiKhoan]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[TaiKhoan](
+	[TenDangNhap] [nchar](100) NOT NULL,
+	[MatKhau] [nchar](100) NULL,
+	[MaNhanVien] [int] NULL,
+ CONSTRAINT [PK_TaiKhoan] PRIMARY KEY CLUSTERED 
+(
+	[TenDangNhap] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[ViTriCuThe]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ViTriCuThe](
+	[MaViTri] [int] IDENTITY(1,1) NOT NULL,
+	[Tang] [int] NULL,
+	[Ngan] [int] NULL,
+	[MaGiaSach] [int] NULL,
+ CONSTRAINT [PK_ViTriCuThe] PRIMARY KEY CLUSTERED 
+(
+	[MaViTri] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[XuLyViPham]    Script Date: 12/29/2020 10:22:55 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[XuLyViPham](
+	[MaXuLy] [int] NOT NULL,
+	[MaDocGia] [int] NULL,
+	[LyDo] [nvarchar](max) NULL,
+	[TienPhat] [int] NULL,
+	[DaTra] [int] NULL,
+ CONSTRAINT [PK_XuLyViPham_1] PRIMARY KEY CLUSTERED 
+(
+	[MaXuLy] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[ChiTiet_MuonTra] ADD  CONSTRAINT [DF_ChiTiet_MuonTra_NgayMuon]  DEFAULT (getdate()) FOR [NgayMuon]
+GO
+ALTER TABLE [dbo].[Sach] ADD  CONSTRAINT [DF_Sach_NgayNhap]  DEFAULT (getdate()) FOR [NgayNhap]
+GO
+ALTER TABLE [dbo].[ChiTiet_MuonTra]  WITH CHECK ADD  CONSTRAINT [FK_ChiTiet_MuonTra_Sach] FOREIGN KEY([MaSach])
+REFERENCES [dbo].[Sach] ([MaSach])
+GO
+ALTER TABLE [dbo].[ChiTiet_MuonTra] CHECK CONSTRAINT [FK_ChiTiet_MuonTra_Sach]
+GO
+ALTER TABLE [dbo].[MuonTra]  WITH CHECK ADD  CONSTRAINT [FK_MuonTra_ChiTiet_MuonTra] FOREIGN KEY([MaMuonTra])
+REFERENCES [dbo].[ChiTiet_MuonTra] ([MaMuonTra])
+GO
+ALTER TABLE [dbo].[MuonTra] CHECK CONSTRAINT [FK_MuonTra_ChiTiet_MuonTra]
+GO
+ALTER TABLE [dbo].[MuonTra]  WITH CHECK ADD  CONSTRAINT [FK_MuonTra_DocGia] FOREIGN KEY([MaDocGia])
+REFERENCES [dbo].[DocGia] ([MaDocGia])
+GO
+ALTER TABLE [dbo].[MuonTra] CHECK CONSTRAINT [FK_MuonTra_DocGia]
+GO
+ALTER TABLE [dbo].[MuonTra]  WITH CHECK ADD  CONSTRAINT [FK_MuonTra_NhanVien] FOREIGN KEY([MaNhanVien])
+REFERENCES [dbo].[NhanVien] ([MaNhanVien])
+GO
+ALTER TABLE [dbo].[MuonTra] CHECK CONSTRAINT [FK_MuonTra_NhanVien]
+GO
+ALTER TABLE [dbo].[NgonNgu_DauSach]  WITH CHECK ADD  CONSTRAINT [FK_NgonNgu_DauSach_DauSach] FOREIGN KEY([MaDauSach])
+REFERENCES [dbo].[DauSach] ([MaDauSach])
+GO
+ALTER TABLE [dbo].[NgonNgu_DauSach] CHECK CONSTRAINT [FK_NgonNgu_DauSach_DauSach]
+GO
+ALTER TABLE [dbo].[NgonNgu_DauSach]  WITH CHECK ADD  CONSTRAINT [FK_NgonNgu_DauSach_NgonNgu] FOREIGN KEY([MaNgonNgu])
+REFERENCES [dbo].[NgonNgu] ([MaNgonNgu])
+GO
+ALTER TABLE [dbo].[NgonNgu_DauSach] CHECK CONSTRAINT [FK_NgonNgu_DauSach_NgonNgu]
+GO
+ALTER TABLE [dbo].[NhanVien]  WITH CHECK ADD  CONSTRAINT [FK_NhanVien_ChucVu] FOREIGN KEY([MaChucVu])
+REFERENCES [dbo].[ChucVu] ([MaChucVu])
+GO
+ALTER TABLE [dbo].[NhanVien] CHECK CONSTRAINT [FK_NhanVien_ChucVu]
+GO
+ALTER TABLE [dbo].[NXB_DauSach]  WITH CHECK ADD  CONSTRAINT [FK_NXB_DauSach_DauSach] FOREIGN KEY([MaDauSach])
+REFERENCES [dbo].[DauSach] ([MaDauSach])
+GO
+ALTER TABLE [dbo].[NXB_DauSach] CHECK CONSTRAINT [FK_NXB_DauSach_DauSach]
+GO
+ALTER TABLE [dbo].[NXB_DauSach]  WITH CHECK ADD  CONSTRAINT [FK_NXB_DauSach_NhaXuatBan] FOREIGN KEY([MaNXB])
+REFERENCES [dbo].[NhaXuatBan] ([MaNXB])
+GO
+ALTER TABLE [dbo].[NXB_DauSach] CHECK CONSTRAINT [FK_NXB_DauSach_NhaXuatBan]
+GO
+ALTER TABLE [dbo].[Sach]  WITH CHECK ADD  CONSTRAINT [FK_Sach_DauSach] FOREIGN KEY([MaDauSach])
+REFERENCES [dbo].[DauSach] ([MaDauSach])
+GO
+ALTER TABLE [dbo].[Sach] CHECK CONSTRAINT [FK_Sach_DauSach]
+GO
+ALTER TABLE [dbo].[Sach]  WITH CHECK ADD  CONSTRAINT [FK_Sach_ViTriCuThe] FOREIGN KEY([MaViTri])
+REFERENCES [dbo].[ViTriCuThe] ([MaViTri])
+GO
+ALTER TABLE [dbo].[Sach] CHECK CONSTRAINT [FK_Sach_ViTriCuThe]
+GO
+ALTER TABLE [dbo].[TacGia_DauSach]  WITH CHECK ADD  CONSTRAINT [FK_TacGia_DauSach_DauSach] FOREIGN KEY([MaDauSach])
+REFERENCES [dbo].[DauSach] ([MaDauSach])
+GO
+ALTER TABLE [dbo].[TacGia_DauSach] CHECK CONSTRAINT [FK_TacGia_DauSach_DauSach]
+GO
+ALTER TABLE [dbo].[TacGia_DauSach]  WITH CHECK ADD  CONSTRAINT [FK_TacGia_DauSach_TacGia] FOREIGN KEY([MaTacGia])
+REFERENCES [dbo].[TacGia] ([MaTacGia])
+GO
+ALTER TABLE [dbo].[TacGia_DauSach] CHECK CONSTRAINT [FK_TacGia_DauSach_TacGia]
+GO
+ALTER TABLE [dbo].[TaiKhoan]  WITH CHECK ADD  CONSTRAINT [FK_TaiKhoan_NhanVien] FOREIGN KEY([MaNhanVien])
+REFERENCES [dbo].[NhanVien] ([MaNhanVien])
+GO
+ALTER TABLE [dbo].[TaiKhoan] CHECK CONSTRAINT [FK_TaiKhoan_NhanVien]
+GO
+ALTER TABLE [dbo].[TheLoai_DauSach]  WITH CHECK ADD  CONSTRAINT [FK_TheLoai_DauSach_DauSach] FOREIGN KEY([MaDauSach])
+REFERENCES [dbo].[DauSach] ([MaDauSach])
+GO
+ALTER TABLE [dbo].[TheLoai_DauSach] CHECK CONSTRAINT [FK_TheLoai_DauSach_DauSach]
+GO
+ALTER TABLE [dbo].[TheLoai_DauSach]  WITH CHECK ADD  CONSTRAINT [FK_TheLoai_DauSach_TheLoai] FOREIGN KEY([MaTheLoai])
+REFERENCES [dbo].[TheLoai] ([MaTheLoai])
+GO
+ALTER TABLE [dbo].[TheLoai_DauSach] CHECK CONSTRAINT [FK_TheLoai_DauSach_TheLoai]
+GO
+ALTER TABLE [dbo].[ViTriCuThe]  WITH CHECK ADD  CONSTRAINT [FK_ViTriCuThe_GiaSach] FOREIGN KEY([MaGiaSach])
+REFERENCES [dbo].[GiaSach] ([MaGiaSach])
+GO
+ALTER TABLE [dbo].[ViTriCuThe] CHECK CONSTRAINT [FK_ViTriCuThe_GiaSach]
+GO
+ALTER TABLE [dbo].[XuLyViPham]  WITH CHECK ADD  CONSTRAINT [FK_XuLyViPham_DocGia1] FOREIGN KEY([MaDocGia])
+REFERENCES [dbo].[DocGia] ([MaDocGia])
+GO
+ALTER TABLE [dbo].[XuLyViPham] CHECK CONSTRAINT [FK_XuLyViPham_DocGia1]
+GO
+/****** Object:  StoredProcedure [dbo].[ChoMuonSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[ChoMuonSach](
+	@masach nchar(50),@madocgia int,@manhanvien int, @ngaytra datetime
+)as begin
+	-- kiểm tra tính chính xác của mã độc giả
+	if not exists (select * from DocGia where MaDocGia = @madocgia)		
+		return 0	
+	-- kiểm tra tính chính xác của mã sách
+	else if not exists (select * from Sach where MaSach = @masach)	
+		return 0	
+	else
+	begin
+		-- thêm vào bảng chi tiết mượn trả trước	
+		insert into ChiTiet_MuonTra(MaSach,DaTra,NgayTra) values(@masach,0,@ngaytra)
+		-- sau đó thêm vào bảng mượn trả
+		insert into MuonTra(MaDocGia,MaNhanVien,MaMuonTra) values(
+		@madocgia,@manhanvien,(select Max(MaMuonTra) from ChiTiet_MuonTra)
+		)
+	end	
+end
+GO
+/****** Object:  StoredProcedure [dbo].[DeleteDL]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[DeleteDL]
+@MaNhanVien int
+as 
+begin
+delete NhanVien
+where MaNhanVien = @MaNhanVien
+end
+GO
+/****** Object:  StoredProcedure [dbo].[InsertDL]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[InsertDL]
+@MaNhanVien int,
+@HoTen nvarchar(200),
+@NgaySinh datetime,
+@SDT int,
+@email nchar(200),
+@MaChucVu int
+as
+begin
+insert into NhanVien(MaNhanVien, HoTen, NgaySinh, SDT, Email, MaChucVu)
+values (@MaNhanVien, @HoTen, @NgaySinh, @SDT, @email, @MaChucVu)
+end
+GO
+/****** Object:  StoredProcedure [dbo].[LuuTru]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[LuuTru]
+as
+select * from NhanVien
+GO
+/****** Object:  StoredProcedure [dbo].[P_ConLai]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[P_ConLai]
+as
+begin
+	select * from Sach where MaSach in
+	(  (select MaSach From Sach) except (select MaSach from ChiTiet_MuonTra where DaTra = 0 ) )
+end;
+GO
+/****** Object:  StoredProcedure [dbo].[PR_XoaTaiKhoan]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROC [dbo].[PR_XoaTaiKhoan](@maNhanVien INT)
+AS 
+BEGIN
+	IF EXISTS (SELECT * FROM TaiKhoan WHERE MaNhanVien=@maNhanVien)
+	BEGIN
+		DELETE FROM TaiKhoan WHERE MaNhanVien=@maNhanVien;
+		PRINT N'Delete successfully'
+	END
+	ELSE
+		PRINT N'This account doesnt exist'
+END
+GO
+/****** Object:  StoredProcedure [dbo].[SuaDauSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[SuaDauSach](
+	@madausach nchar(50),@tendausach nvarchar(500),@tacgia nvarchar(500),
+	@theloai nvarchar(500),@NXB nvarchar(500),@ngonngu nvarchar(500)
+)as begin
+	update DauSach set TenDauSach = @tendausach where MaDauSach = @madausach
+	delete from TacGia_DauSach where MaDauSach = @madausach
+	exec ThemTacGia_DauSach @MaDauSach = @madausach,@strTacGia = @tacgia
+	delete from TheLoai_DauSach where MaDauSach = @madausach
+	exec ThemTheLoai_DauSach @MaDauSach = @madausach,@strTheLoai = @theloai
+	delete from NXB_DauSach where MaDauSach = @madausach
+	exec ThemNXB_DauSach @MaDauSach = @madausach,@strNXB = @NXB
+	delete from NgonNgu_DauSach where MaDauSach = @madausach
+	exec ThemNgonNgu_DauSach @MaDauSach = @madausach,@strNgonNgu = @ngonngu
+end
+GO
+/****** Object:  StoredProcedure [dbo].[SuaThongTinMuonTra]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[SuaThongTinMuonTra](
+	@mamuontra int,@hanmuon datetime,@masach nchar(50)
+)
+as begin
+	--kiểm tra tính chính xác của mã sách
+	if not exists (select * from Sach where MaSach = @masach)	
+		return 0
+	else
+		update ChiTiet_MuonTra set MaSach = @masach, NgayTra = @hanmuon where MaMuonTra = @mamuontra
+end
+GO
+/****** Object:  StoredProcedure [dbo].[SuaThongTinSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[SuaThongTinSach](
+	@masach nchar(50),@tap int,@lantaiban int,@sotrang int,
+	@namxuatban datetime,@tinhtrang nvarchar(200),
+	@giasach int,@tang int,@ngan int,@hinhanh nvarchar(max)
+) as begin
+	update ViTriCuThe set MaGiaSach = @giasach,Tang = @tang,Ngan = @ngan
+			where MaViTri = (select MaViTri from Sach where MaSach = @masach)
+	update Sach set Tap = @tap,LanTaiBan =@lantaiban,SoTrang = @sotrang,
+			NamXuatBan = @namxuatban,TinhTrang = @tinhtrang,HinhAnh = @hinhanh
+		where MaSach = @masach
+end
+GO
+/****** Object:  StoredProcedure [dbo].[ThemDauSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE proc [dbo].[ThemDauSach] (
+	@madausach nchar(50), @tendausach nvarchar(500),@tacgia nvarchar(500),@NXB nvarchar(500),
+	@theloai nvarchar(500),@ngonngu nvarchar(500)
+)as begin
+	insert into DauSach(MaDauSach,TenDauSach) values (@madausach,@tendausach)
+	-- kết nối đầu sách với các bảng tác giả, thể loại, NXB, Ngôn ngữ
+	exec ThemTacGia_DauSach @madausach,@tacgia
+	exec ThemTheLoai_DauSach @madausach,@theloai
+	exec ThemNXB_DauSach @madausach,@NXB
+	exec ThemNgonNgu_DauSach @madausach,@ngonngu
+end
+GO
+/****** Object:  StoredProcedure [dbo].[ThemNgonNgu_DauSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[ThemNgonNgu_DauSach](@MaDauSach nchar(50), @strNgonNgu nvarchar(500))
+as begin
+	set @strNgonNgu =@strNgonNgu + ','
+	while (CHARINDEX(',',@strNgonNgu) > 0) -- có nhiều tác giả, cắt từng tên theo dấu ','
+	begin
+		declare @tenngonngu nvarchar(500)
+		set @tenngonngu = LEFT(@strNgonNgu,CHARINDEX(',',@strNgonNgu)-1)
+		set @tenngonngu = Rtrim(Ltrim(@tenngonngu))
+		if exists (select * from NgonNgu where LOWER(TenNgonNgu) = LOWER(@tenngonngu))
+		begin
+			insert into NgonNgu_DauSach(MaDauSach,MaNgonNgu) 
+			values (
+				@MaDauSach,
+				(select MaNgonNgu from NgonNgu where TenNgonNgu = @tenngonngu)
+			)
+		end
+		else
+		begin 
+			insert into NgonNgu(TenNgonNgu) values (@tenngonngu)
+			insert into NgonNgu_DauSach(MaDauSach,MaNgonNgu) 
+			values (
+				@MaDauSach,
+				(select MaNgonNgu from NgonNgu where TenNgonNgu = @tenngonngu)
+			)
+		end
+		set @strNgonNgu = SUBSTRING(@strNgonNgu,CHARINDEX(',',@strNgonNgu)+1,LEN(@strNgonNgu))
+	end
+end
+GO
+/****** Object:  StoredProcedure [dbo].[ThemNXB_DauSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[ThemNXB_DauSach](@MaDauSach nchar(50), @strNXB nvarchar(500))
+as begin
+	set @strNXB =@strNXB + ','
+	while (CHARINDEX(',',@strNXB) > 0) -- có nhiều NXB, cắt từng tên theo dấu ','
+	begin
+		declare @tennxb nvarchar(500)
+		set @tennxb = LEFT(@strNXB,CHARINDEX(',',@strNXB)-1)
+		set @tennxb = Rtrim(Ltrim(@tennxb))
+		if exists (select * from NhaXuatBan where LOWER(TenNXB) = LOWER(@tennxb))
+		begin
+			insert into NXB_DauSach(MaDauSach,MaNXB) 
+			values (
+				@MaDauSach,
+				(select MaNXB from NhaXuatBan where TenNXB = @tennxb)
+			)
+		end
+		else
+		begin 
+			insert into NhaXuatBan(TenNXB) values (@tennxb)
+			insert into TheLoai_DauSach(MaDauSach,MaTheLoai) 
+			values (
+				@MaDauSach,
+				(select MaNXB from NhaXuatBan where TenNXB = @tennxb)
+			)
+		end
+		set @strNXB = stuff(@strNXB,1,CHARINDEX(',',@strNXB)+1,'')
+	end
+end
+GO
+/****** Object:  StoredProcedure [dbo].[ThemSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[ThemSach](
+	@madausach nchar(50),@masach nchar(50),@tap int,@lantaiban int, 
+	@namxb datetime,@sotrang int,@tinhtrang nvarchar(200),
+	@GiaSach int,@Tang int, @Ngan int,@hinhanh nvarchar(max)
+)as begin
+	if exists (select * from DauSach where MaDauSach = @madausach)
+		insert into ViTriCuThe(Tang,Ngan,MaGiaSach) values (@Tang,@Ngan,@GiaSach)		
+		insert into Sach(MaDauSach,MaSach,Tap,LanTaiBan,TinhTrang,SoTrang,NamXuatBan,MaViTri,HinhAnh)
+		values
+		(
+			@madausach,@masach,@tap,@lantaiban,@tinhtrang,@sotrang,@namxb,
+			(select Max(MaViTri) from ViTriCuThe),@hinhanh
+		)
+end
+GO
+/****** Object:  StoredProcedure [dbo].[ThemTacGia_DauSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[ThemTacGia_DauSach](
+	@MaDauSach nchar(50), @strTacGia nvarchar(500)
+)as begin
+	set @strTacGia = @strTacGia + ','
+	while (CHARINDEX(',',@strTacGia) > 0) -- có nhiều tác giả, cắt từng tên theo dấu ','
+	begin
+		declare @tentacgia nvarchar(500)
+		set @tentacgia = LEFT(@strTacGia,CHARINDEX(',',@strTacGia)-1)
+		set @tentacgia = Rtrim(Ltrim(@tentacgia))
+		if exists (select * from TacGia where LOWER(TenTacGia) = LOWER(@tentacgia))
+		begin
+		insert into TacGia_DauSach(MaDauSach,MaTacGia) 
+		values (
+			@MaDauSach,
+			(select MaTacGia from TacGia where TenTacGia = @tentacgia)
+		)
+		end
+		else
+		begin 
+			insert into TacGia(TenTacGia) values (@tentacgia)
+			insert into TacGia_DauSach(MaDauSach,MaTacGia) 
+			values (
+				@MaDauSach,
+				(select MaTacGia from TacGia where TenTacGia = @tentacgia)
+			)
+		end
+		set @strTacGia = stuff(@strTacGia,1,CHARINDEX(',',@strTacGia)+1,'')
+	end 
+end
+GO
+/****** Object:  StoredProcedure [dbo].[ThemTheLoai_DauSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[ThemTheLoai_DauSach](@MaDauSach nchar(50), @strTheLoai nvarchar(500))
+as begin
+	set @strTheLoai =@strTheLoai + ','
+	while (CHARINDEX(',',@strTheLoai) > 0) -- có nhiều tác giả, cắt từng tên theo dấu ','
+	begin
+		declare @tentheloai nvarchar(500)
+		set @tentheloai = LEFT(@strTheLoai,CHARINDEX(',',@strTheLoai)-1)
+		set @tentheloai = Rtrim(Ltrim(@tentheloai))
+		if exists (select * from TheLoai where LOWER(TenTheLoai) = LOWER(@tentheloai))
+		begin
+			insert into TheLoai_DauSach(MaDauSach,MaTheLoai) 
+			values (
+				@MaDauSach,
+				(select MaTheLoai from TheLoai where TenTheLoai = @tentheloai)
+			)
+		end
+		else
+		begin 
+			insert into TheLoai(TenTheLoai) values (@tentheloai)
+			insert into TheLoai_DauSach(MaDauSach,MaTheLoai) 
+			values (
+				@MaDauSach,
+				(select MaTheLoai from TheLoai where TenTheLoai = @tentheloai)
+			)
+		end
+		set @strTheLoai = SUBSTRING(@strTheLoai,CHARINDEX(',',@strTheLoai)+1,LEN(@strTheLoai))
+	end
+end
+GO
+/****** Object:  StoredProcedure [dbo].[trasach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+----------------------------------------------
+CREATE PROC [dbo].[trasach] (@maMuonTra int, @ngaytra datetime) 
+
+AS
+BEGIN
+	UPDATE dbo.ChiTiet_MuonTra
+	SET
+	    --MaMuonTra - column value is auto-generated
+	    dbo.ChiTiet_MuonTra.DaTra = 1, -- int
+	    dbo.ChiTiet_MuonTra.NgayTra = @ngaytra -- datetimehiTiet_MuonTra
+	WHERE dbo.ChiTiet_MuonTra.MaMuonTra = @maMuonTra 
+
+END
+GO
+/****** Object:  StoredProcedure [dbo].[UpdateDL]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create proc [dbo].[UpdateDL]
+@MaNhanVien int,
+@HoTen nvarchar(200),
+@NgaySinh datetime,
+@SDT int,
+@email nchar(200),
+@MaChucVu int
+as
+begin
+update NhanVien
+set HoTen= @HoTen, NgaySinh= @NgaySinh, SDT= @SDT, Email = @email, MaChucVu= @MaChucVu
+where MaNhanVien = @MaNhanVien
+end
+GO
+/****** Object:  StoredProcedure [dbo].[XoaCuonSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[XoaCuonSach] @masach nchar(50)
+as begin
+	-- nếu mã sách không tồn tại thì kết thúc
+	if not exists (select * from Sach where MaSach = @masach)
+		return 0
+	-- chỉ xóa cuốn sách khi không có ai mượn, hoặc mượn mà đã trả
+	if not exists (select * from ChiTiet_MuonTra where MaSach = @masach)		
+	begin		
+		delete from Sach where MaSach = @masach
+	end
+	else if not exists(select * from ChiTiet_MuonTra where MaSach = @masach and DaTra = 0)
+	begin 
+		delete from MuonTra where MaMuonTra = 
+					(select MaMuonTra from ChiTiet_MuonTra where MaSach = @masach)
+		delete from ChiTiet_MuonTra where MaSach = @masach
+		delete from Sach where MaSach = @masach
+	end	
+	else
+	begin
+		return 0
+	end
+end
+GO
+/****** Object:  StoredProcedure [dbo].[XoaDauSach]    Script Date: 12/29/2020 10:22:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE proc [dbo].[XoaDauSach] @madausach nchar(50)
+as begin
+	-- B1: xóa mã đầu sách đã có ở các bảng liên quan
+	-- Xóa tại bảng sách:
+	declare @MaSach nchar(50)	
+	declare Contro cursor for (select MaSach from Sach where MaDauSach = @madausach)
+	open Contro
+	fetch next from Contro into @MaSach
+	while @@FETCH_STATUS = 0
+	begin
+		exec XoaCuonSach @MaSach
+		fetch next from Contro into @MaSach
+	end
+	close Contro
+	deallocate Contro
+	--
+	delete from TacGia_DauSach where MaDauSach = @madausach
+	delete from NXB_DauSach where MaDauSach = @madausach
+	delete from TheLoai_DauSach where MaDauSach = @madausach
+	delete from NgonNgu_DauSach where MaDauSach = @madausach
+
+	-- b2: Xóa đầu sách đó
+	delete from DauSach where MaDauSach = @madausach
+end
+GO
